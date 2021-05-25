@@ -52,7 +52,7 @@ def test_change_rv_size():
     loc = at.as_tensor_variable([1, 2])
     rv = normal(loc=loc)
     assert rv.ndim == 1
-    assert rv.eval().shape == (2,)
+    assert tuple(rv.shape.eval()) == (2,)
 
     with pytest.raises(ShapeError, match="must be ≤1-dimensional"):
         change_rv_size(rv, new_size=[[2, 3]])
@@ -61,7 +61,7 @@ def test_change_rv_size():
 
     rv_new = change_rv_size(rv, new_size=(3,), expand=True)
     assert rv_new.ndim == 2
-    assert rv_new.eval().shape == (3, 2)
+    assert tuple(rv_new.shape.eval()) == (3, 2)
 
     # Make sure that the shape used to determine the expanded size doesn't
     # depend on the old `RandomVariable`.
@@ -71,7 +71,7 @@ def test_change_rv_size():
 
     rv_newer = change_rv_size(rv_new, new_size=(4,), expand=True)
     assert rv_newer.ndim == 3
-    assert rv_newer.eval().shape == (4, 3, 2)
+    assert tuple(rv_newer.shape.eval()) == (4, 3, 2)
 
     # Make sure we avoid introducing a `Cast` by converting the new size before
     # constructing the new `RandomVariable`
@@ -80,7 +80,19 @@ def test_change_rv_size():
     rv_newer = change_rv_size(rv, new_size=new_size, expand=False)
     assert rv_newer.ndim == 2
     assert isinstance(rv_newer.owner.inputs[1], Constant)
-    assert rv_newer.eval().shape == (4, 3)
+    assert tuple(rv_newer.shape.eval()) == (4, 3)
+
+    rv = normal(0, 1)
+    new_size = at.as_tensor(np.array([4, 3], dtype="int32"))
+    rv_newer = change_rv_size(rv, new_size=new_size, expand=True)
+    assert rv_newer.ndim == 2
+    assert tuple(rv_newer.shape.eval()) == (4, 3)
+
+    rv = normal(0, 1)
+    new_size = at.as_tensor(2, dtype="int32")
+    rv_newer = change_rv_size(rv, new_size=new_size, expand=True)
+    assert rv_newer.ndim == 1
+    assert tuple(rv_newer.shape.eval()) == (2,)
 
 
 class TestBroadcasting:
@@ -434,6 +446,13 @@ def test_pandas_to_array(input_dtype):
     assert hasattr(wrapped, "set_default")
     # Make sure the returned object is an Aesara TensorVariable
     assert isinstance(wrapped, TensorVariable)
+
+
+def test_pandas_to_array_pandas_index():
+    data = pd.Index([1, 2, 3])
+    result = pandas_to_array(data)
+    expected = np.array([1, 2, 3])
+    np.testing.assert_array_equal(result, expected)
 
 
 def test_walk_model():
