@@ -1,4 +1,4 @@
-#   Copyright 2020 The PyMC Developers
+#   Copyright 2021 The PyMC Developers
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 # pylint: disable=wildcard-import
-__version__ = "3.11.1"
+__version__ = "4.0.dev0"
 
 import logging
 import multiprocessing as mp
@@ -26,6 +26,10 @@ if not logging.root.handlers:
     if len(_log.handlers) == 0:
         handler = logging.StreamHandler()
         _log.addHandler(handler)
+
+_log.info(
+    "You are running the development version of PyMC3 which currently still lacks key features."
+)
 
 
 def __set_compiler_flags():
